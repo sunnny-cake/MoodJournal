@@ -691,7 +691,7 @@ st.markdown(
         position: relative;
     }}
     
-    /* 背景层叠加，降低雨景图透明度 */
+    /* 背景层叠加，降低雨景图透明度（使用更轻的叠加层，避免黑屏） */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -699,15 +699,21 @@ st.markdown(
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.55);
-        z-index: 0;
-        pointer-events: none;
+        background-color: rgba(0, 0, 0, 0.25);
+        z-index: 0 !important;
+        pointer-events: none !important;
     }}
     
-    /* 确保内容在背景层之上 */
-    .main {{
-        position: relative;
-        z-index: 1;
+    /* 确保所有内容在背景层之上 */
+    .main,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stHeader"],
+    [data-testid="stSidebar"],
+    section[data-testid="stSidebar"],
+    .block-container,
+    div[data-testid="stVerticalBlock"] {{
+        position: relative !important;
+        z-index: 100 !important;
     }}
     header, footer, #MainMenu {{visibility: hidden;}}
     
