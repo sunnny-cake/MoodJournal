@@ -53,29 +53,6 @@ st.set_page_config(
     menu_items=None
 )
 
-# 强制显示侧边栏（如果被隐藏）
-# 使用JavaScript确保侧边栏始终可见
-st.markdown("""
-<script>
-// 确保侧边栏始终可见
-window.addEventListener('load', function() {
-    const sidebar = document.querySelector('[data-testid="stSidebar"]');
-    if (sidebar) {
-        sidebar.style.visibility = 'visible';
-        sidebar.style.display = 'block';
-        sidebar.style.zIndex = '999';
-    }
-    
-    // 确保侧边栏按钮可见
-    const sidebarButton = document.querySelector('[data-testid="stHeader"] button');
-    if (sidebarButton) {
-        sidebarButton.style.visibility = 'visible';
-        sidebarButton.style.display = 'block';
-        sidebarButton.style.zIndex = '1000';
-    }
-});
-</script>
-""", unsafe_allow_html=True)
 
 # 路径配置
 DATA_DIR = "data"
@@ -862,31 +839,27 @@ st.markdown(
         z-index: 100 !important;
     }}
     
-    /* 确保侧边栏在背景层之上，并且始终可见 */
-    [data-testid="stSidebar"],
-    section[data-testid="stSidebar"] {{
-        position: relative !important;
-        z-index: 999 !important; /* 提高z-index确保在最上层 */
-        visibility: visible !important;
-        display: block !important;
-        background-color: rgba(14, 17, 23, 0.95) !important; /* Streamlit默认侧边栏背景色 */
+    /* 修正后的侧边栏样式 - 不破坏 Streamlit 原生交互 */
+    [data-testid="stSidebar"] {{
+        background-color: rgba(14, 17, 23, 0.95) !important; /* 只保留背景色 */
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
     }}
     
-    /* 确保侧边栏内容可见 */
-    [data-testid="stSidebar"] > div,
-    [data-testid="stSidebar"] > div > div {{
-        visibility: visible !important;
-        display: block !important;
+    /* 确保侧边栏内的文字清晰可见 */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] div {{
+        color: #ffffff !important;
+        text-shadow: none !important;
     }}
-    
-    /* 确保侧边栏按钮始终可见且可点击 */
-    [data-testid="stSidebar"] [data-testid="baseButton-secondary"],
-    [data-testid="stSidebar"] button {{
-        visibility: visible !important;
-        display: block !important;
-        z-index: 1000 !important;
-    }}
-    header, footer, #MainMenu {{visibility: hidden;}}
+    /* 只隐藏汉堡菜单和页脚，保留 header 以显示展开按钮 */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    /* 注意：不要隐藏 header，否则展开按钮会消失 */
     
     /* 确保侧边栏展开按钮始终可见 - 使用通用选择器，不依赖动态类名 */
     /* Streamlit侧边栏按钮的正确选择器 - 使用属性选择器更稳定 */
@@ -904,28 +877,6 @@ st.markdown(
         pointer-events: auto !important;
     }}
     
-    /* 确保侧边栏容器可见 */
-    section[data-testid="stSidebar"],
-    [data-testid="stSidebar"] {{
-        visibility: visible !important;
-        display: block !important;
-        z-index: 999 !important; /* 提高z-index确保在最上层 */
-        position: relative !important;
-        background-color: rgba(14, 17, 23, 0.95) !important; /* Streamlit默认侧边栏背景色 */
-    }}
-    
-    /* 确保侧边栏内容可见 */
-    [data-testid="stSidebar"] > div,
-    [data-testid="stSidebar"] > div > div {{
-        visibility: visible !important;
-        display: block !important;
-    }}
-    
-    /* 确保header区域可见（包含侧边栏按钮） */
-    [data-testid="stHeader"] {{
-        visibility: visible !important;
-        display: flex !important;
-    }}
     
     /* 移动端响应式容器 */
     .main .block-container {{
