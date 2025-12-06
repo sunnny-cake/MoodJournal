@@ -680,40 +680,34 @@ except:
 st.markdown(
     f"""
     <style>
-    /* 移动端优化 */
-    @media (max-width: 768px) {{
-        .main .block-container {{
-            padding: 1rem;
-            max-width: 100%;
-        }}
-        
-        /* 确保日期和天气在移动端也保持一行显示 */
-        div[data-testid="column"] {{
-            min-width: 0 !important;
-            flex: 1 1 0% !important;
-        }}
-        
-        /* 日期和天气输入框在移动端缩小间距和字体 */
-        .stDateInput > div > div,
-        .stSelectbox > div > div {{
-            font-size: 14px !important;
-            padding: 8px !important;
-        }}
-        
-        /* 日期和天气标签在移动端更紧凑 */
-        .stDateInput label,
-        .stSelectbox label {{
-            font-size: 13px !important;
-            margin-bottom: 4px !important;
-        }}
-    }}
     
+    /* 背景雨景图 - 透明度调整为0.4-0.5，兼顾氛围与内容可读性 */
     .stApp {{
         background-image: url("data:image/jpg;base64,{bg_base64}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         background-attachment: fixed;
+        position: relative;
+    }}
+    
+    /* 背景层叠加，降低雨景图透明度 */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.55);
+        z-index: 0;
+        pointer-events: none;
+    }}
+    
+    /* 确保内容在背景层之上 */
+    .main {{
+        position: relative;
+        z-index: 1;
     }}
     header, footer, #MainMenu {{visibility: hidden;}}
     
@@ -757,19 +751,6 @@ st.markdown(
         }}
     }}
     
-    /* 文件上传区域 - 极简风格 */
-    .stFileUploader > div {{
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        min-height: 120px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        position: relative !important;
-    }}
-    
     /* 隐藏文件上传区域的所有文字提示和按钮 */
     .stFileUploader p,
     .stFileUploader span,
@@ -783,11 +764,125 @@ st.markdown(
         visibility: hidden !important;
     }}
     
+    /* ============================================
+       核心颜色规则：雨窗背景层的文字样式
+       ============================================ */
+    /* 标题、页面提示、说明文字等 - 浅色（淡米色#F5F5F5）+ 1px轻微黑色文字阴影 */
+    h1, h2, h3, h4, h5, h6 {{
+        color: #F5F5F5 !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+    }}
+    
+    /* 普通文本、标签、说明文字 */
+    p, label, span, div {{
+        color: #F5F5F5 !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+    }}
+    
+    /* 输入框、下拉框、文本区域的标签 */
+    .stDateInput label,
+    .stSelectbox label,
+    .stTextInput label,
+    .stTextArea label,
+    .stFileUploader label {{
+        color: #F5F5F5 !important;
+        font-weight: 500 !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+    }}
+    
+    /* ============================================
+       输入框、下拉框、文本区域等组件样式
+       ============================================ */
+    /* 统一磨砂玻璃质感：8px圆角 + 轻微阴影 */
+    .stDateInput > div > div,
+    .stSelectbox > div > div,
+    .stTextInput > div > div > input,
+    .stTextArea textarea,
+    .stFileUploader > div {{
+        background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
+        border-radius: 8px !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important; /* #E0E0E0 半透明 */
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important; /* #00000020 */
+        transition: all 0.3s ease !important;
+    }}
+    
+    /* 组件内文字颜色：纯白色 */
+    .stDateInput input,
+    .stSelectbox select,
+    .stTextInput input,
+    .stTextArea textarea {{
+        color: #FFFFFF !important;
+        background-color: transparent !important;
+    }}
+    
+    /* 占位符颜色 */
+    input::placeholder,
+    textarea::placeholder {{
+        color: rgba(255, 255, 255, 0.6) !important;
+    }}
+    
+    /* 选中状态：边框淡蓝色#6699cc（半透明），背景色轻微提亮 */
+    .stDateInput > div > div:focus-within,
+    .stSelectbox > div > div:focus-within,
+    .stTextInput > div > div > input:focus,
+    .stTextArea textarea:focus {{
+        border-color: rgba(102, 153, 204, 0.7) !important; /* #6699cc 半透明 */
+        background-color: rgba(51, 51, 51, 0.6) !important; /* #33333390 轻微提亮 */
+        outline: none !important;
+    }}
+    
+    /* 天气选择下拉框 - 图标与文字对齐 */
+    .stSelectbox select {{
+        padding-left: 8px !important;
+        line-height: 1.5 !important;
+    }}
+    
+    /* ============================================
+       今日随笔输入框特殊样式
+       ============================================ */
+    .stTextArea textarea {{
+        background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
+        color: #FFFFFF !important;
+        font-size: 18px;
+        border-radius: 8px !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    .stTextArea textarea:focus {{
+        border-color: rgba(102, 153, 204, 0.7) !important;
+        background-color: rgba(51, 51, 51, 0.6) !important;
+        color: #FFFFFF !important;
+        outline: none !important;
+    }}
+    
+    /* ============================================
+       文件上传区域样式
+       ============================================ */
+    .stFileUploader > div {{
+        background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
+        border-radius: 8px !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+        min-height: 120px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+    }}
+    
     /* 极简风格：只显示"＋"号图标 */
     .stFileUploader > div::after {{
         content: "+" !important;
         font-size: 48px !important;
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: rgba(245, 245, 245, 0.7) !important; /* #F5F5F5 半透明 */
         font-weight: 300 !important;
         line-height: 1 !important;
         display: block !important;
@@ -797,204 +892,197 @@ st.markdown(
         z-index: 1 !important;
     }}
     
+    /* ============================================
+       按钮组件样式
+       ============================================ */
+    .stButton button {{
+        background-color: rgba(45, 45, 45, 0.56) !important; /* #2D2D2D90 */
+        color: #FFFFFF !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        border-radius: 8px !important;
+        padding: 8px 24px;
+        white-space: nowrap !important;
+        width: auto !important;
+        min-height: 44px;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    .stButton button:hover {{
+        background-color: rgba(26, 26, 26, 0.56) !important; /* #1A1A1A90 */
+        transform: scale(1.02) !important;
+        border-color: rgba(224, 224, 224, 0.7) !important;
+    }}
+    
+    /* ============================================
+       移动端优化
+       ============================================ */
     @media (max-width: 768px) {{
+        /* 移动端组件上下间距≥15px，宽度占屏幕85% */
+        .main .block-container {{
+            padding: 1rem 0.5rem;
+            max-width: 85% !important;
+            margin: 0 auto !important;
+        }}
+        
+        /* 组件间距 */
+        .stDateInput,
+        .stSelectbox,
+        .stTextArea,
+        .stFileUploader,
+        .stButton {{
+            margin-top: 15px !important;
+            margin-bottom: 15px !important;
+        }}
+        
+        /* 标题样式 */
+        h1, h2, h3, h4, h5, h6 {{
+            color: #F5F5F5 !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+            font-size: 1.2rem !important;
+            margin-top: 0.5rem !important;
+        }}
+        
+        /* 文本区域移动端优化 */
+        .stTextArea textarea {{
+            font-size: 16px;
+            padding: 12px !important;
+        }}
+        
+        /* 文件上传区域移动端优化 */
         .stFileUploader > div {{
             padding: 1rem !important;
-            background-color: rgba(0, 0, 0, 0.4) !important;
             min-height: 100px !important;
         }}
         
         .stFileUploader > div::after {{
             font-size: 40px !important;
         }}
-    }}
-    
-    /* 今日随笔输入框 - 初始状态：浅灰色半透明磨砂质感 */
-    .stTextArea textarea {{
-        background-color: rgba(128, 128, 128, 0.2) !important;
-        color: rgba(255, 255, 255, 0.9) !important;
-        font-size: 18px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        transition: all 0.3s ease !important;
-    }}
-    
-    /* 今日随笔输入框 - 选中后：浅白色半透明磨砂质感 */
-    .stTextArea textarea:focus {{
-        background-color: rgba(255, 255, 255, 0.25) !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        outline: none !important;
-    }}
-    
-    @media (max-width: 768px) {{
-        .stTextArea textarea {{
-            font-size: 16px;
-            padding: 12px !important;
-            background-color: rgba(128, 128, 128, 0.25) !important;
-        }}
         
-        .stTextArea textarea:focus {{
-            background-color: rgba(255, 255, 255, 0.3) !important;
-        }}
-        
-        /* 文本区域标签颜色优化 */
-        .stTextArea label {{
-            color: rgba(255, 255, 255, 0.95) !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
-        }}
-    }}
-    
-    /* 优化手机端所有文本颜色，提高可读性 */
-    @media (max-width: 768px) {{
-        /* 标题颜色优化 */
-        h1, h2, h3, h4, h5, h6 {{
-            color: rgba(255, 255, 255, 0.95) !important;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
-        }}
-        
-        /* 标签和文本颜色优化 */
-        label, p, div, span {{
-            color: rgba(255, 255, 255, 0.9) !important;
-        }}
-        
-        /* 输入框标签颜色 */
-        .stDateInput label,
-        .stSelectbox label,
-        .stTextInput label,
-        .stTextArea label,
-        .stFileUploader label {{
-            color: rgba(255, 255, 255, 0.95) !important;
-            font-weight: 500 !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
-        }}
-        
-        /* 输入框文本颜色 */
-        .stDateInput input,
-        .stSelectbox select,
-        .stTextInput input {{
-            color: #ffffff !important;
-            background-color: rgba(255, 255, 255, 0.15) !important;
-        }}
-        
-        /* 占位符颜色 - 确保与背景有对比度 */
-        input::placeholder,
-        textarea::placeholder {{
-            color: rgba(255, 255, 255, 0.5) !important;
-        }}
-    }}
-    
-    .stButton button {{
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.6) !important;
-        border-radius: 30px;
-        padding: 8px 24px;
-        white-space: nowrap !important;
-        width: auto !important;
-        min-height: 44px; /* 移动端触摸优化 */
-    }}
-    
-    @media (max-width: 768px) {{
+        /* 按钮移动端优化 */
         .stButton button {{
             padding: 12px 28px;
             font-size: 16px;
             width: 100% !important;
         }}
-    }}
-    
-    .stButton button:hover {{
-        background-color: rgba(255, 255, 255, 0.2) !important;
-        transform: scale(1.05);
-    }}
-    
-    .stSelectbox > div > div {{
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        backdrop-filter: blur(10px);
-    }}
-    
-    @media (max-width: 768px) {{
+        
+        /* 日期和天气输入框移动端优化 */
+        .stDateInput > div > div,
         .stSelectbox > div > div {{
-            min-height: 44px; /* 移动端触摸优化 */
+            font-size: 14px !important;
+            padding: 8px !important;
+            min-height: 44px !important;
+        }}
+        
+        .stDateInput label,
+        .stSelectbox label {{
+            font-size: 13px !important;
+            margin-bottom: 4px !important;
+        }}
+        
+        /* 确保日期和天气在移动端也保持一行显示 */
+        div[data-testid="column"] {{
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
         }}
     }}
     
-    .stDateInput > div > div {{
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        backdrop-filter: blur(10px);
-    }}
     
-    @media (max-width: 768px) {{
-        .stDateInput > div > div {{
-            min-height: 44px;
-        }}
-    }}
-    
+    /* ============================================
+       手账卡片样式
+       ============================================ */
     .journal-card {{
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
+        background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border-radius: 8px !important;
         padding: 20px;
-        margin: 10px 0;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 15px 0 !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
     }}
     
     @media (max-width: 768px) {{
         .journal-card {{
             padding: 15px;
-            margin: 8px 0;
+            margin: 15px 0 !important;
+            width: 85% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
         }}
     }}
     
-    /* 优化列表视图（expander）的文字颜色和背景 */
+    /* ============================================
+       列表视图（expander）样式优化
+       ============================================ */
     .streamlit-expanderHeader {{
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
+        color: #F5F5F5 !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
         border-radius: 8px !important;
         padding: 12px !important;
         margin-bottom: 8px !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
     }}
     
     .streamlit-expanderHeader:hover {{
-        background-color: rgba(0, 0, 0, 0.4) !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
+        background-color: rgba(51, 51, 51, 0.6) !important; /* #33333390 */
+        border-color: rgba(224, 224, 224, 0.7) !important;
     }}
     
     .streamlit-expanderContent {{
-        background-color: rgba(0, 0, 0, 0.2) !important;
+        background-color: rgba(45, 45, 45, 0.4) !important;
         border-radius: 8px !important;
         padding: 15px !important;
         margin-top: 8px !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(224, 224, 224, 0.3) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+    }}
+    
+    /* 列表视图中的文字颜色 */
+    .streamlit-expanderContent p,
+    .streamlit-expanderContent div,
+    .streamlit-expanderContent label,
+    .streamlit-expanderContent strong {{
+        color: #F5F5F5 !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+    }}
+    
+    /* 列表视图中的按钮样式 */
+    .streamlit-expanderContent button {{
+        color: #FFFFFF !important;
+        background-color: rgba(45, 45, 45, 0.56) !important;
+        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        border-radius: 8px !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    .streamlit-expanderContent button:hover {{
+        background-color: rgba(26, 26, 26, 0.56) !important;
+        transform: scale(1.02) !important;
     }}
     
     @media (max-width: 768px) {{
         .streamlit-expanderHeader {{
-            background-color: rgba(0, 0, 0, 0.4) !important;
-            color: rgba(255, 255, 255, 0.98) !important;
             font-size: 14px !important;
             padding: 10px !important;
+            margin-bottom: 15px !important;
         }}
         
         .streamlit-expanderContent {{
-            background-color: rgba(0, 0, 0, 0.3) !important;
             padding: 12px !important;
-        }}
-        
-        /* 列表视图中的文字颜色优化 */
-        .streamlit-expanderContent p,
-        .streamlit-expanderContent div,
-        .streamlit-expanderContent label,
-        .streamlit-expanderContent strong {{
-            color: rgba(255, 255, 255, 0.95) !important;
-        }}
-        
-        /* 列表视图中的按钮文字颜色 */
-        .streamlit-expanderContent button {{
-            color: rgba(255, 255, 255, 0.95) !important;
+            margin-top: 15px !important;
         }}
     }}
     
