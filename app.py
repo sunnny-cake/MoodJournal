@@ -492,7 +492,17 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     font_size_text = int(base_width * 0.04)
     
     # 字体路径列表，优先使用中文字体（支持云服务器环境）
+    # 添加更多云服务器常用字体路径，确保能找到支持中文的字体
     font_paths = [
+        # Linux 字体路径（云服务器常用，优先尝试）
+        ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", None),  # 文泉驿微米黑
+        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", None),  # 文泉驿正黑
+        ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体（OpenType）
+        ("/usr/share/fonts/truetype/arphic/uming.ttc", None),  # AR PL UMing 中文字体
+        ("/usr/share/fonts/truetype/arphic/ukai.ttc", None),  # AR PL UKai 中文字体
+        ("/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", None),  # Droid Sans Fallback
+        ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", None),  # Liberation Sans
         # Windows 字体路径
         ("C:/Windows/Fonts/msyh.ttc", None),  # 微软雅黑（优先，支持中文）
         ("C:/Windows/Fonts/msyhbd.ttc", None),  # 微软雅黑 Bold
@@ -504,17 +514,12 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
         ("/System/Library/Fonts/PingFang.ttc", None),  # macOS 中文字体
         ("/System/Library/Fonts/STHeiti Light.ttc", None),  # macOS 黑体
         ("/System/Library/Fonts/Supplemental/PingFang.ttc", None),  # macOS PingFang 备选路径
-        # Linux 字体路径（云服务器常用）
-        ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", None),  # Linux 中文字体
-        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", None),  # Linux 中文字体（文泉驿正黑）
-        ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体
-        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体（OpenType）
-        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", None),  # Linux 默认
         # 项目内字体（如果存在）
         ("assets/handwriting.ttf", None),  # 手写字体（如果支持中文）
         # 尝试使用系统默认字体目录
         (os.path.expanduser("~/Library/Fonts/PingFang.ttc"), None),  # macOS 用户字体目录
         (os.path.expanduser("~/.fonts/wqy-microhei.ttc"), None),  # Linux 用户字体目录
+        (os.path.expanduser("~/.local/share/fonts/wqy-microhei.ttc"), None),  # Linux 用户字体目录（备选）
     ]
     
     # 尝试加载字体
@@ -558,13 +563,23 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
         except Exception as e:
             continue
     
-    # 如果所有字体都加载失败，尝试使用PIL的默认字体，但增强颜色对比度
+    # 如果所有字体都加载失败，尝试使用PIL的默认字体
+    # 如果默认字体也不可用，创建一个简单的字体对象用于渲染
     if font_title is None:
         try:
-            # 使用默认字体，但会增大字号以提高可读性
+            # 尝试加载默认字体
             font_title = ImageFont.load_default()
             font_text = ImageFont.load_default()
-            # 注意：默认字体可能不支持中文，但至少能显示英文和数字
+        except:
+            # 如果默认字体也失败，创建一个空字体对象（会在后续代码中处理）
+            font_title = None
+            font_text = None
+    
+    # 如果仍然没有字体，使用PIL的默认字体（可能不支持中文，但至少能显示）
+    if font_title is None:
+        try:
+            font_title = ImageFont.load_default()
+            font_text = ImageFont.load_default()
         except:
             pass
     
@@ -573,15 +588,18 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     # 绘制日期和天气（左上角，略微旋转）
     # 增强颜色对比度，确保字体清晰可见
     date_weather_text = f"{date_str}  {weather}"
+    
+    # 计算文字宽度
     if font_title is not None:
         try:
             bbox = draw.textbbox((0, 0), date_weather_text, font=font_title)
             text_width = bbox[2] - bbox[0]
-        except:
+        except Exception as e:
             # 如果字体不支持某些字符，使用估算
             text_width = len(date_weather_text) * font_size_title * 0.6
     else:
-        text_width = len(date_weather_text) * font_size_title * 0.6
+        # 如果没有字体，使用估算（中文字符通常更宽）
+        text_width = len(date_weather_text) * font_size_title * 0.8
     
     date_x = int(base_width * 0.08)
     date_y = int(base_height * 0.08)
@@ -591,10 +609,20 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     date_img = Image.new("RGBA", (int(text_width) + 100, font_size_title + 50), (0, 0, 0, 0))
     date_draw = ImageDraw.Draw(date_img)
     # 增强颜色对比度：使用更深的颜色 (60, 60, 80) 和更高的不透明度 (240)
-    if font_title is not None:
-        date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240), font=font_title)
-    else:
-        date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+    try:
+        if font_title is not None:
+            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240), font=font_title)
+        else:
+            # 如果没有字体，直接绘制（PIL会使用默认字体）
+            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+    except Exception as e:
+        # 如果绘制失败，尝试不使用字体
+        try:
+            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+        except:
+            # 如果还是失败，至少显示日期（使用ASCII字符）
+            date_draw.text((50, 25), date_str.replace("年", "-").replace("月", "-").replace("日", ""), fill=(60, 60, 80, 240))
+    
     date_img = date_img.rotate(-5, expand=False, fillcolor=(0, 0, 0, 0))
     base_img.paste(date_img, (date_x, date_y), date_img)
     
@@ -636,10 +664,19 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
                 line_img = Image.new("RGBA", (int(line_width) + 100, int(line_height) + 50), (0, 0, 0, 0))
                 line_draw = ImageDraw.Draw(line_img)
                 # 增强颜色对比度：使用更深的颜色和更高的不透明度，确保字体清晰可见
-                if font_text is not None:
-                    line_draw.text((50, 25), line, fill=(40, 40, 60, 250), font=font_text)
-                else:
-                    line_draw.text((50, 25), line, fill=(40, 40, 60, 250))
+                try:
+                    if font_text is not None:
+                        line_draw.text((50, 25), line, fill=(40, 40, 60, 250), font=font_text)
+                    else:
+                        # 如果没有字体，直接绘制（PIL会使用默认字体）
+                        line_draw.text((50, 25), line, fill=(40, 40, 60, 250))
+                except Exception as e:
+                    # 如果绘制失败，尝试不使用字体
+                    try:
+                        line_draw.text((50, 25), line, fill=(40, 40, 60, 250))
+                    except:
+                        # 如果还是失败，跳过这一行
+                        continue
                 line_img = line_img.rotate(line_angle, expand=False, fillcolor=(0, 0, 0, 0))
                 
                 # 粘贴到基图
@@ -708,12 +745,19 @@ st.markdown(
     .main,
     [data-testid="stAppViewContainer"],
     [data-testid="stHeader"],
-    [data-testid="stSidebar"],
-    section[data-testid="stSidebar"],
     .block-container,
     div[data-testid="stVerticalBlock"] {{
         position: relative !important;
         z-index: 100 !important;
+    }}
+    
+    /* 确保侧边栏在背景层之上，并且始终可见 */
+    [data-testid="stSidebar"],
+    section[data-testid="stSidebar"] {{
+        position: relative !important;
+        z-index: 200 !important;
+        visibility: visible !important;
+        display: block !important;
     }}
     header, footer, #MainMenu {{visibility: hidden;}}
     
@@ -737,6 +781,9 @@ st.markdown(
     section[data-testid="stSidebar"],
     [data-testid="stSidebar"] {{
         visibility: visible !important;
+        display: block !important;
+        z-index: 200 !important;
+        position: relative !important;
     }}
     
     /* 确保header区域可见（包含侧边栏按钮） */
