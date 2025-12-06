@@ -515,10 +515,52 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     font_size_title = int(base_width * 0.06)  # 响应式字体大小
     font_size_text = int(base_width * 0.04)
     
-    # 字体路径列表，优先使用中文字体（支持云服务器环境）
-    # 添加更多云服务器常用字体路径，确保能找到支持中文的字体
+    # 获取项目根目录路径
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    fonts_dir = os.path.join(project_root, "fonts")
+    
+    # 字体路径列表，优先使用项目内的字体文件
     font_paths = [
-        # Linux 字体路径（云服务器常用，优先尝试）
+        # ============================================
+        # 优先：项目内 fonts 文件夹中的字体文件
+        # ============================================
+        (os.path.join(fonts_dir, "journal_font.ttf"), None),  # 项目字体（优先）
+        (os.path.join(fonts_dir, "NotoSansCJK-Regular.ttf"), None),  # Noto 中文字体
+        (os.path.join(fonts_dir, "NotoSansCJK-Regular.ttc"), None),  # Noto 中文字体（TTC格式）
+        (os.path.join(fonts_dir, "wqy-microhei.ttc"), None),  # 文泉驿微米黑
+        (os.path.join(fonts_dir, "wqy-zenhei.ttc"), None),  # 文泉驿正黑
+        (os.path.join(fonts_dir, "msyh.ttc"), None),  # 微软雅黑
+        (os.path.join(fonts_dir, "simhei.ttf"), None),  # 黑体
+        (os.path.join(fonts_dir, "simsun.ttc"), None),  # 宋体
+        (os.path.join(fonts_dir, "simkai.ttf"), None),  # 楷体
+        # 尝试 fonts 文件夹中的所有 .ttf 和 .ttc 文件（如果文件夹存在）
+    ]
+    
+    # 动态添加 fonts 文件夹中的所有字体文件
+    if os.path.exists(fonts_dir) and os.path.isdir(fonts_dir):
+        try:
+            for f in os.listdir(fonts_dir):
+                font_path = os.path.join(fonts_dir, f)
+                if os.path.isfile(font_path) and f.lower().endswith(('.ttf', '.ttc')):
+                    # 避免重复添加已列出的字体
+                    if font_path not in [p for p, _ in font_paths]:
+                        font_paths.append((font_path, None))
+        except Exception:
+            # 如果读取文件夹失败，继续使用已列出的字体路径
+            pass
+    
+    # 继续添加其他字体路径
+    font_paths.extend([
+        # ============================================
+        # 备选：项目内 assets 文件夹中的字体文件
+        # ============================================
+        (os.path.join(project_root, "assets", "handwriting.ttf"), None),  # 手写字体（如果支持中文）
+        (os.path.join(project_root, "assets", "journal_font.ttf"), None),  # assets 中的字体
+        
+        # ============================================
+        # 降级：系统字体路径（云服务器常用）
+        # ============================================
+        # Linux 字体路径（云服务器常用）
         ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", None),  # 文泉驿微米黑
         ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", None),  # 文泉驿正黑
         ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体
@@ -527,6 +569,7 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
         ("/usr/share/fonts/truetype/arphic/ukai.ttc", None),  # AR PL UKai 中文字体
         ("/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", None),  # Droid Sans Fallback
         ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", None),  # Liberation Sans
+        
         # Windows 字体路径
         ("C:/Windows/Fonts/msyh.ttc", None),  # 微软雅黑（优先，支持中文）
         ("C:/Windows/Fonts/msyhbd.ttc", None),  # 微软雅黑 Bold
@@ -534,50 +577,80 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
         ("C:/Windows/Fonts/simsun.ttc", None),  # 宋体
         ("C:/Windows/Fonts/simkai.ttf", None),  # 楷体
         ("C:/Windows/Fonts/arial.ttf", None),  # Arial（英文，最后备选）
+        
         # macOS 字体路径
         ("/System/Library/Fonts/PingFang.ttc", None),  # macOS 中文字体
         ("/System/Library/Fonts/STHeiti Light.ttc", None),  # macOS 黑体
         ("/System/Library/Fonts/Supplemental/PingFang.ttc", None),  # macOS PingFang 备选路径
-        # 项目内字体（如果存在）
-        ("assets/handwriting.ttf", None),  # 手写字体（如果支持中文）
+        
         # 尝试使用系统默认字体目录
         (os.path.expanduser("~/Library/Fonts/PingFang.ttc"), None),  # macOS 用户字体目录
         (os.path.expanduser("~/.fonts/wqy-microhei.ttc"), None),  # Linux 用户字体目录
         (os.path.expanduser("~/.local/share/fonts/wqy-microhei.ttc"), None),  # Linux 用户字体目录（备选）
-    ]
+    ])
     
-    # 尝试加载字体
+    # 去重字体路径列表（避免重复）
+    seen_paths = set()
+    unique_font_paths = []
+    for path, index in font_paths:
+        if path not in seen_paths:
+            seen_paths.add(path)
+            unique_font_paths.append((path, index))
+    font_paths = unique_font_paths
+    
+    # 尝试加载字体（优先使用项目内字体）
     font_title = None
     font_text = None
+    font_loaded = False
     
     for path, index in font_paths:
         try:
-            if os.path.exists(path):
-                # 加载字体
-                try:
-                    # 对于 .ttc 文件，尝试不同的索引
-                    if path.endswith('.ttc'):
-                        # 尝试索引 0（通常包含常规字体）
+            # 检查文件是否存在
+            if not os.path.exists(path):
+                continue
+            
+            # 加载字体
+            try:
+                # 对于 .ttc 文件，尝试不同的索引
+                if path.endswith('.ttc'):
+                    # 尝试索引 0（通常包含常规字体）
+                    try:
+                        font_title = ImageFont.truetype(path, font_size_title, index=0)
+                        font_text = ImageFont.truetype(path, font_size_text, index=0)
+                    except:
+                        # 如果索引 0 失败，尝试不指定索引
                         try:
-                            font_title = ImageFont.truetype(path, font_size_title, index=0)
-                            font_text = ImageFont.truetype(path, font_size_text, index=0)
-                        except:
-                            # 如果索引 0 失败，尝试不指定索引
                             font_title = ImageFont.truetype(path, font_size_title)
                             font_text = ImageFont.truetype(path, font_size_text)
-                    else:
-                        font_title = ImageFont.truetype(path, font_size_title)
-                        font_text = ImageFont.truetype(path, font_size_text)
-                except Exception as e:
-                    continue
-                
-                # 测试字体是否能正确渲染中文
+                        except:
+                            # 如果还是失败，尝试其他索引（1-3）
+                            for idx in range(1, 4):
+                                try:
+                                    font_title = ImageFont.truetype(path, font_size_title, index=idx)
+                                    font_text = ImageFont.truetype(path, font_size_text, index=idx)
+                                    break
+                                except:
+                                    continue
+                else:
+                    # .ttf 文件直接加载
+                    font_title = ImageFont.truetype(path, font_size_title)
+                    font_text = ImageFont.truetype(path, font_size_text)
+            except Exception as e:
+                # 如果加载失败，继续尝试下一个字体
+                font_title = None
+                font_text = None
+                continue
+            
+            # 测试字体是否能正确渲染中文
+            if font_title is not None:
                 test_img = Image.new("RGB", (100, 100), "white")
                 test_draw = ImageDraw.Draw(test_img)
                 try:
-                    # 测试中文字符
-                    test_draw.text((0, 0), "年月日", font=font_title)
+                    # 测试中文字符（使用多个中文字符确保字体支持中文）
+                    test_text = "年月日中文"
+                    test_draw.text((0, 0), test_text, font=font_title)
                     # 如果成功，使用这个字体
+                    font_loaded = True
                     break
                 except Exception as e:
                     # 如果测试失败，继续尝试下一个
@@ -585,6 +658,9 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
                     font_text = None
                     continue
         except Exception as e:
+            # 发生任何异常，继续尝试下一个字体
+            font_title = None
+            font_text = None
             continue
     
     # 如果所有字体都加载失败，尝试使用PIL的默认字体
