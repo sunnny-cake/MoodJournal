@@ -757,44 +757,87 @@ st.markdown(
         }}
     }}
     
+    /* 文件上传区域 - 极简风格 */
     .stFileUploader > div {{
         background-color: rgba(0, 0, 0, 0.3) !important;
         border-radius: 12px;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        min-height: 120px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+    }}
+    
+    /* 隐藏文件上传区域的所有文字提示和按钮 */
+    .stFileUploader p,
+    .stFileUploader span,
+    .stFileUploader small,
+    .stFileUploader button,
+    .stFileUploader div[data-testid="stFileUploader"] p,
+    .stFileUploader div[data-testid="stFileUploader"] span,
+    .stFileUploader div[data-testid="stFileUploader"] small,
+    .stFileUploader div[data-testid="stFileUploader"] button {{
+        display: none !important;
+        visibility: hidden !important;
+    }}
+    
+    /* 极简风格：只显示"＋"号图标 */
+    .stFileUploader > div::after {{
+        content: "+" !important;
+        font-size: 48px !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-weight: 300 !important;
+        line-height: 1 !important;
+        display: block !important;
+        text-align: center !important;
+        position: absolute !important;
+        pointer-events: none !important;
+        z-index: 1 !important;
     }}
     
     @media (max-width: 768px) {{
         .stFileUploader > div {{
             padding: 1rem !important;
             background-color: rgba(0, 0, 0, 0.4) !important;
+            min-height: 100px !important;
         }}
         
-        /* 文件上传区域的文字颜色优化 */
-        .stFileUploader label,
-        .stFileUploader p,
-        .stFileUploader span {{
-            color: rgba(255, 255, 255, 0.95) !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+        .stFileUploader > div::after {{
+            font-size: 40px !important;
         }}
     }}
     
+    /* 今日随笔输入框 - 初始状态：浅灰色半透明磨砂质感 */
     .stTextArea textarea {{
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        color: #ffffff !important;
+        background-color: rgba(128, 128, 128, 0.2) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
         font-size: 18px;
         border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
+        transition: all 0.3s ease !important;
+    }}
+    
+    /* 今日随笔输入框 - 选中后：浅白色半透明磨砂质感 */
+    .stTextArea textarea:focus {{
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        outline: none !important;
     }}
     
     @media (max-width: 768px) {{
         .stTextArea textarea {{
             font-size: 16px;
             padding: 12px !important;
-            color: #ffffff !important;
-            background-color: rgba(0, 0, 0, 0.4) !important;
+            background-color: rgba(128, 128, 128, 0.25) !important;
+        }}
+        
+        .stTextArea textarea:focus {{
+            background-color: rgba(255, 255, 255, 0.3) !important;
         }}
         
         /* 文本区域标签颜色优化 */
@@ -836,16 +879,11 @@ st.markdown(
             background-color: rgba(255, 255, 255, 0.15) !important;
         }}
         
-        /* 占位符颜色 */
+        /* 占位符颜色 - 确保与背景有对比度 */
         input::placeholder,
         textarea::placeholder {{
-            color: rgba(255, 255, 255, 0.6) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
         }}
-    }}
-    
-    .stTextArea textarea:focus {{
-        background-color: rgba(220, 220, 255, 0.25) !important;
-        border: 1px solid rgba(255, 255, 255, 0.5);
     }}
     
     .stButton button {{
@@ -1028,10 +1066,11 @@ if page == "✨ 新建日记":
     # 图片上传
     st.markdown("### 📸 美好瞬间")
     uploaded_files = st.file_uploader(
-        "上传图片",
+        "",
         type=['png', 'jpg', 'jpeg'],
         accept_multiple_files=True,
-        help="最多上传3张图片"
+        help="最多上传3张图片",
+        label_visibility="collapsed"
     )
     
     if len(uploaded_files) > 3:
