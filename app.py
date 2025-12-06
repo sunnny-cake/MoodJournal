@@ -53,6 +53,30 @@ st.set_page_config(
     menu_items=None
 )
 
+# 强制显示侧边栏（如果被隐藏）
+# 使用JavaScript确保侧边栏始终可见
+st.markdown("""
+<script>
+// 确保侧边栏始终可见
+window.addEventListener('load', function() {
+    const sidebar = document.querySelector('[data-testid="stSidebar"]');
+    if (sidebar) {
+        sidebar.style.visibility = 'visible';
+        sidebar.style.display = 'block';
+        sidebar.style.zIndex = '999';
+    }
+    
+    // 确保侧边栏按钮可见
+    const sidebarButton = document.querySelector('[data-testid="stHeader"] button');
+    if (sidebarButton) {
+        sidebarButton.style.visibility = 'visible';
+        sidebarButton.style.display = 'block';
+        sidebarButton.style.zIndex = '1000';
+    }
+});
+</script>
+""", unsafe_allow_html=True)
+
 # 路径配置
 DATA_DIR = "data"
 JOURNALS_FILE = os.path.join(DATA_DIR, "journals.json")
@@ -611,17 +635,28 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     # 增强颜色对比度：使用更深的颜色 (60, 60, 80) 和更高的不透明度 (240)
     try:
         if font_title is not None:
-            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240), font=font_title)
+            # 尝试使用字体绘制
+            try:
+                date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240), font=font_title)
+            except Exception as e:
+                # 如果字体不支持某些字符，尝试不使用字体
+                date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
         else:
-            # 如果没有字体，直接绘制（PIL会使用默认字体）
-            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+            # 如果没有字体，直接绘制（PIL会使用默认字体，可能不支持中文）
+            # 如果默认字体不支持中文，至少显示日期数字部分
+            try:
+                date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+            except:
+                # 如果还是失败，使用ASCII格式的日期
+                ascii_date = date_str.replace("年", "-").replace("月", "-").replace("日", "")
+                date_draw.text((50, 25), f"{ascii_date} {weather}", fill=(60, 60, 80, 240))
     except Exception as e:
-        # 如果绘制失败，尝试不使用字体
+        # 最后的降级方案：只显示日期数字
         try:
-            date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
+            ascii_date = date_str.replace("年", "-").replace("月", "-").replace("日", "")
+            date_draw.text((50, 25), ascii_date, fill=(60, 60, 80, 240))
         except:
-            # 如果还是失败，至少显示日期（使用ASCII字符）
-            date_draw.text((50, 25), date_str.replace("年", "-").replace("月", "-").replace("日", ""), fill=(60, 60, 80, 240))
+            pass
     
     date_img = date_img.rotate(-5, expand=False, fillcolor=(0, 0, 0, 0))
     base_img.paste(date_img, (date_x, date_y), date_img)
@@ -755,9 +790,25 @@ st.markdown(
     [data-testid="stSidebar"],
     section[data-testid="stSidebar"] {{
         position: relative !important;
-        z-index: 200 !important;
+        z-index: 999 !important; /* 提高z-index确保在最上层 */
         visibility: visible !important;
         display: block !important;
+        background-color: rgba(14, 17, 23, 0.95) !important; /* Streamlit默认侧边栏背景色 */
+    }}
+    
+    /* 确保侧边栏内容可见 */
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] > div > div {{
+        visibility: visible !important;
+        display: block !important;
+    }}
+    
+    /* 确保侧边栏按钮始终可见且可点击 */
+    [data-testid="stSidebar"] [data-testid="baseButton-secondary"],
+    [data-testid="stSidebar"] button {{
+        visibility: visible !important;
+        display: block !important;
+        z-index: 1000 !important;
     }}
     header, footer, #MainMenu {{visibility: hidden;}}
     
@@ -782,8 +833,16 @@ st.markdown(
     [data-testid="stSidebar"] {{
         visibility: visible !important;
         display: block !important;
-        z-index: 200 !important;
+        z-index: 999 !important; /* 提高z-index确保在最上层 */
         position: relative !important;
+        background-color: rgba(14, 17, 23, 0.95) !important; /* Streamlit默认侧边栏背景色 */
+    }}
+    
+    /* 确保侧边栏内容可见 */
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] > div > div {{
+        visibility: visible !important;
+        display: block !important;
     }}
     
     /* 确保header区域可见（包含侧边栏按钮） */
@@ -886,10 +945,21 @@ st.markdown(
         outline: none !important;
     }}
     
-    /* 天气选择下拉框 - 图标与文字对齐 */
+    /* 天气选择下拉框 - 图标与文字对齐，确保文字完整显示 */
     .stSelectbox select {{
         padding-left: 8px !important;
+        padding-right: 30px !important; /* 为下拉箭头留出空间 */
         line-height: 1.5 !important;
+        min-width: 120px !important; /* 确保有足够宽度显示完整文字 */
+        width: 100% !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }}
+    
+    /* 确保下拉框容器有足够宽度 */
+    .stSelectbox > div > div {{
+        min-width: 120px !important;
+        width: 100% !important;
     }}
     
     /* ============================================
@@ -915,12 +985,12 @@ st.markdown(
     }}
     
     /* ============================================
-       文件上传区域样式
+       文件上传区域样式 - 优化视觉效果
        ============================================ */
     .stFileUploader > div {{
         background-color: rgba(45, 45, 45, 0.5) !important; /* #2D2D2D80 */
         border-radius: 8px !important;
-        border: 1px solid rgba(224, 224, 224, 0.5) !important;
+        border: 2px dashed rgba(224, 224, 224, 0.4) !important; /* 虚线边框，更优雅 */
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.125) !important;
@@ -929,6 +999,13 @@ st.markdown(
         align-items: center !important;
         justify-content: center !important;
         position: relative !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    /* 悬停效果 */
+    .stFileUploader > div:hover {{
+        border-color: rgba(224, 224, 224, 0.6) !important;
+        background-color: rgba(45, 45, 45, 0.6) !important;
     }}
     
     /* 极简风格：只显示"＋"号图标 */
