@@ -491,19 +491,30 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     font_size_title = int(base_width * 0.06)  # 响应式字体大小
     font_size_text = int(base_width * 0.04)
     
-    # 字体路径列表，优先使用中文字体（跳过可能不支持中文的手写字体）
+    # 字体路径列表，优先使用中文字体（支持云服务器环境）
     font_paths = [
+        # Windows 字体路径
         ("C:/Windows/Fonts/msyh.ttc", None),  # 微软雅黑（优先，支持中文）
         ("C:/Windows/Fonts/msyhbd.ttc", None),  # 微软雅黑 Bold
         ("C:/Windows/Fonts/simhei.ttf", None),  # 黑体
         ("C:/Windows/Fonts/simsun.ttc", None),  # 宋体
         ("C:/Windows/Fonts/simkai.ttf", None),  # 楷体
-        ("assets/handwriting.ttf", None),  # 手写字体（如果支持中文）
         ("C:/Windows/Fonts/arial.ttf", None),  # Arial（英文，最后备选）
+        # macOS 字体路径
         ("/System/Library/Fonts/PingFang.ttc", None),  # macOS 中文字体
         ("/System/Library/Fonts/STHeiti Light.ttc", None),  # macOS 黑体
+        ("/System/Library/Fonts/Supplemental/PingFang.ttc", None),  # macOS PingFang 备选路径
+        # Linux 字体路径（云服务器常用）
         ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", None),  # Linux 中文字体
+        ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", None),  # Linux 中文字体（文泉驿正黑）
+        ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", None),  # Noto 中文字体（OpenType）
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", None),  # Linux 默认
+        # 项目内字体（如果存在）
+        ("assets/handwriting.ttf", None),  # 手写字体（如果支持中文）
+        # 尝试使用系统默认字体目录
+        (os.path.expanduser("~/Library/Fonts/PingFang.ttc"), None),  # macOS 用户字体目录
+        (os.path.expanduser("~/.fonts/wqy-microhei.ttc"), None),  # Linux 用户字体目录
     ]
     
     # 尝试加载字体
@@ -515,9 +526,20 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
             if os.path.exists(path):
                 # 加载字体
                 try:
-                    font_title = ImageFont.truetype(path, font_size_title)
-                    font_text = ImageFont.truetype(path, font_size_text)
-                except:
+                    # 对于 .ttc 文件，尝试不同的索引
+                    if path.endswith('.ttc'):
+                        # 尝试索引 0（通常包含常规字体）
+                        try:
+                            font_title = ImageFont.truetype(path, font_size_title, index=0)
+                            font_text = ImageFont.truetype(path, font_size_text, index=0)
+                        except:
+                            # 如果索引 0 失败，尝试不指定索引
+                            font_title = ImageFont.truetype(path, font_size_title)
+                            font_text = ImageFont.truetype(path, font_size_text)
+                    else:
+                        font_title = ImageFont.truetype(path, font_size_title)
+                        font_text = ImageFont.truetype(path, font_size_text)
+                except Exception as e:
                     continue
                 
                 # 测试字体是否能正确渲染中文
@@ -528,7 +550,7 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
                     test_draw.text((0, 0), "年月日", font=font_title)
                     # 如果成功，使用这个字体
                     break
-                except:
+                except Exception as e:
                     # 如果测试失败，继续尝试下一个
                     font_title = None
                     font_text = None
@@ -536,17 +558,20 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
         except Exception as e:
             continue
     
-    # 如果所有字体都加载失败，使用默认字体（但可能不支持中文）
+    # 如果所有字体都加载失败，尝试使用PIL的默认字体，但增强颜色对比度
     if font_title is None:
         try:
+            # 使用默认字体，但会增大字号以提高可读性
             font_title = ImageFont.load_default()
             font_text = ImageFont.load_default()
+            # 注意：默认字体可能不支持中文，但至少能显示英文和数字
         except:
             pass
     
     draw = ImageDraw.Draw(base_img)
     
     # 绘制日期和天气（左上角，略微旋转）
+    # 增强颜色对比度，确保字体清晰可见
     date_weather_text = f"{date_str}  {weather}"
     if font_title is not None:
         try:
@@ -562,12 +587,14 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
     date_y = int(base_height * 0.08)
     
     # 创建日期文字的临时图像以便旋转
+    # 使用更深的颜色和更高的不透明度，确保字体清晰可见
     date_img = Image.new("RGBA", (int(text_width) + 100, font_size_title + 50), (0, 0, 0, 0))
     date_draw = ImageDraw.Draw(date_img)
+    # 增强颜色对比度：使用更深的颜色 (60, 60, 80) 和更高的不透明度 (240)
     if font_title is not None:
-        date_draw.text((50, 25), date_weather_text, fill=(100, 100, 120, 200), font=font_title)
+        date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240), font=font_title)
     else:
-        date_draw.text((50, 25), date_weather_text, fill=(100, 100, 120, 200))
+        date_draw.text((50, 25), date_weather_text, fill=(60, 60, 80, 240))
     date_img = date_img.rotate(-5, expand=False, fillcolor=(0, 0, 0, 0))
     base_img.paste(date_img, (date_x, date_y), date_img)
     
@@ -608,10 +635,11 @@ def create_journal_page(images, text, date_str, weather, base_width=1200, base_h
                 
                 line_img = Image.new("RGBA", (int(line_width) + 100, int(line_height) + 50), (0, 0, 0, 0))
                 line_draw = ImageDraw.Draw(line_img)
+                # 增强颜色对比度：使用更深的颜色和更高的不透明度，确保字体清晰可见
                 if font_text is not None:
-                    line_draw.text((50, 25), line, fill=(60, 60, 80, 220), font=font_text)
+                    line_draw.text((50, 25), line, fill=(40, 40, 60, 250), font=font_text)
                 else:
-                    line_draw.text((50, 25), line, fill=(60, 60, 80, 220))
+                    line_draw.text((50, 25), line, fill=(40, 40, 60, 250))
                 line_img = line_img.rotate(line_angle, expand=False, fillcolor=(0, 0, 0, 0))
                 
                 # 粘贴到基图
@@ -735,6 +763,46 @@ st.markdown(
         .stTextArea textarea {{
             font-size: 16px;
             padding: 12px !important;
+            color: #ffffff !important;
+        }}
+    }}
+    
+    /* 优化手机端所有文本颜色，提高可读性 */
+    @media (max-width: 768px) {{
+        /* 标题颜色优化 */
+        h1, h2, h3, h4, h5, h6 {{
+            color: rgba(255, 255, 255, 0.95) !important;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+        }}
+        
+        /* 标签和文本颜色优化 */
+        label, p, div, span {{
+            color: rgba(255, 255, 255, 0.9) !important;
+        }}
+        
+        /* 输入框标签颜色 */
+        .stDateInput label,
+        .stSelectbox label,
+        .stTextInput label,
+        .stTextArea label,
+        .stFileUploader label {{
+            color: rgba(255, 255, 255, 0.95) !important;
+            font-weight: 500 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+        }}
+        
+        /* 输入框文本颜色 */
+        .stDateInput input,
+        .stSelectbox select,
+        .stTextInput input {{
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+        }}
+        
+        /* 占位符颜色 */
+        input::placeholder,
+        textarea::placeholder {{
+            color: rgba(255, 255, 255, 0.6) !important;
         }}
     }}
     
@@ -861,8 +929,7 @@ if page == "✨ 新建日记":
     
     st.markdown("### 🌸 记录今天的美好瞬间")
     
-    # 日期和天气选择 - 移动端响应式
-    # 在移动端使用垂直布局，桌面端使用水平布局
+    # 日期和天气选择 - 一行显示
     col1, col2 = st.columns([1, 1])
     with col1:
         selected_date = st.date_input("📅 日期", value=date.today())
@@ -870,8 +937,8 @@ if page == "✨ 新建日记":
         weather_options = ["☀️ 晴天", "⛅ 多云", "🌧️ 雨天", "❄️ 雪天", "🌫️ 雾天", "🌙 夜晚"]
         selected_weather = st.selectbox("🌤️ 天气", weather_options)
     
-    # 图片上传（1-3张）
-    st.markdown("### 📸 美好瞬间（最多3张）")
+    # 图片上传
+    st.markdown("### 📸 美好瞬间")
     uploaded_files = st.file_uploader(
         "上传图片",
         type=['png', 'jpg', 'jpeg'],
@@ -905,8 +972,6 @@ if page == "✨ 新建日记":
     st.markdown("<br>", unsafe_allow_html=True)
     col_left, col_center, col_right = st.columns([1, 2, 1])
     with col_center:
-        if os.path.exists(icon_path):
-            st.image(icon_path, width=50)
         generate_btn = st.button("✨ 生成手帐", use_container_width=True)
     
     # 生成逻辑

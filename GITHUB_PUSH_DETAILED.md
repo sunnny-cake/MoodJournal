@@ -161,7 +161,7 @@ https://github.com/你的用户名/MoodJournal.git
 ### 6.2 添加远程仓库
 
 在命令行中执行（**替换 `YOUR_USERNAME` 为你的 GitHub 用户名**）：
-
+https://github.com/sunnny-cake/MoodJournal.git
 ```bash
 git remote add origin https://github.com/YOUR_USERNAME/MoodJournal.git
 ```
