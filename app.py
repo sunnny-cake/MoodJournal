@@ -686,6 +686,26 @@ st.markdown(
             padding: 1rem;
             max-width: 100%;
         }}
+        
+        /* 确保日期和天气在移动端也保持一行显示 */
+        div[data-testid="column"] {{
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
+        }}
+        
+        /* 日期和天气输入框在移动端缩小间距和字体 */
+        .stDateInput > div > div,
+        .stSelectbox > div > div {{
+            font-size: 14px !important;
+            padding: 8px !important;
+        }}
+        
+        /* 日期和天气标签在移动端更紧凑 */
+        .stDateInput label,
+        .stSelectbox label {{
+            font-size: 13px !important;
+            margin-bottom: 4px !important;
+        }}
     }}
     
     .stApp {{
@@ -738,23 +758,33 @@ st.markdown(
     }}
     
     .stFileUploader > div {{
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
         border-radius: 12px;
         backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }}
     
     @media (max-width: 768px) {{
         .stFileUploader > div {{
             padding: 1rem !important;
+            background-color: rgba(0, 0, 0, 0.4) !important;
+        }}
+        
+        /* 文件上传区域的文字颜色优化 */
+        .stFileUploader label,
+        .stFileUploader p,
+        .stFileUploader span {{
+            color: rgba(255, 255, 255, 0.95) !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
         }}
     }}
     
     .stTextArea textarea {{
-        background-color: rgba(220, 220, 255, 0.15) !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
         color: #ffffff !important;
         font-size: 18px;
         border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
     }}
@@ -764,6 +794,13 @@ st.markdown(
             font-size: 16px;
             padding: 12px !important;
             color: #ffffff !important;
+            background-color: rgba(0, 0, 0, 0.4) !important;
+        }}
+        
+        /* 文本区域标签颜色优化 */
+        .stTextArea label {{
+            color: rgba(255, 255, 255, 0.95) !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
         }}
     }}
     
@@ -873,6 +910,56 @@ st.markdown(
         }}
     }}
     
+    /* 优化列表视图（expander）的文字颜色和背景 */
+    .streamlit-expanderHeader {{
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        margin-bottom: 8px !important;
+    }}
+    
+    .streamlit-expanderHeader:hover {{
+        background-color: rgba(0, 0, 0, 0.4) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }}
+    
+    .streamlit-expanderContent {{
+        background-color: rgba(0, 0, 0, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        margin-top: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }}
+    
+    @media (max-width: 768px) {{
+        .streamlit-expanderHeader {{
+            background-color: rgba(0, 0, 0, 0.4) !important;
+            color: rgba(255, 255, 255, 0.98) !important;
+            font-size: 14px !important;
+            padding: 10px !important;
+        }}
+        
+        .streamlit-expanderContent {{
+            background-color: rgba(0, 0, 0, 0.3) !important;
+            padding: 12px !important;
+        }}
+        
+        /* 列表视图中的文字颜色优化 */
+        .streamlit-expanderContent p,
+        .streamlit-expanderContent div,
+        .streamlit-expanderContent label,
+        .streamlit-expanderContent strong {{
+            color: rgba(255, 255, 255, 0.95) !important;
+        }}
+        
+        /* 列表视图中的按钮文字颜色 */
+        .streamlit-expanderContent button {{
+            color: rgba(255, 255, 255, 0.95) !important;
+        }}
+    }}
+    
     /* 图片响应式 */
     .stImage img {{
         border-radius: 12px;
@@ -929,8 +1016,9 @@ if page == "✨ 新建日记":
     
     st.markdown("### 🌸 记录今天的美好瞬间")
     
-    # 日期和天气选择 - 一行显示
-    col1, col2 = st.columns([1, 1])
+    # 日期和天气选择 - 一行显示（移动端也保持一行）
+    # 使用更紧凑的列布局，确保移动端也在一行
+    col1, col2 = st.columns([1, 1], gap="small")
     with col1:
         selected_date = st.date_input("📅 日期", value=date.today())
     with col2:
@@ -972,7 +1060,7 @@ if page == "✨ 新建日记":
     st.markdown("<br>", unsafe_allow_html=True)
     col_left, col_center, col_right = st.columns([1, 2, 1])
     with col_center:
-        generate_btn = st.button("✨ 生成手帐", use_container_width=True)
+        generate_btn = st.button("✨ 制作手账", use_container_width=True)
     
     # 生成逻辑
     if generate_btn:
