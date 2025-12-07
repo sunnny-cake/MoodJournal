@@ -829,14 +829,32 @@ st.markdown(
         pointer-events: none !important;
     }}
     
-    /* 确保所有内容在背景层之上 */
+    /* 1. 普通内容层级：放在背景之上，但不要太高 */
     .main,
     [data-testid="stAppViewContainer"],
-    [data-testid="stHeader"],
     .block-container,
     div[data-testid="stVerticalBlock"] {{
         position: relative !important;
-        z-index: 100 !important;
+        z-index: 10 !important; /* 降低内容层级，防止遮挡按钮 */
+    }}
+    
+    /* 2. 顶栏层级：必须极高，确保浮在所有内容上面 */
+    [data-testid="stHeader"] {{
+        position: fixed !important; /* 强制固定在顶部 */
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 99999 !important; /* 远高于内容 */
+        background: transparent !important; /* 保持透明 */
+        pointer-events: none !important; /* 让点击穿透顶栏空白处 */
+        height: 60px !important; /* 限制高度，避免遮挡下方内容操作 */
+    }}
+    
+    /* 3. 顶栏内的按钮：必须开启点击事件 */
+    [data-testid="stHeader"] button,
+    [data-testid="stHeader"] > div:first-child {{
+        pointer-events: auto !important; /* 恢复按钮的点击能力 */
+        z-index: 100000 !important; /* 最高层级 */
     }}
     
     /* 修正后的侧边栏样式 - 不破坏 Streamlit 原生交互 */
@@ -861,20 +879,17 @@ st.markdown(
     footer {{visibility: hidden;}}
     /* 注意：不要隐藏 header，否则展开按钮会消失 */
     
-    /* 确保侧边栏展开按钮始终可见 - 使用通用选择器，不依赖动态类名 */
-    /* Streamlit侧边栏按钮的正确选择器 - 使用属性选择器更稳定 */
+    /* 确保侧边栏展开按钮始终可见 - 与新分层设置保持一致 */
     [data-testid="stHeader"] > div:first-child button,
     [data-testid="stToolbar"] button,
     button[kind="header"],
-    /* 通过位置选择器找到左上角的按钮 */
     header button,
-    /* 确保所有header区域的按钮可见 */
     [data-testid="stHeader"] button {{
         visibility: visible !important;
         display: block !important;
-        z-index: 9999 !important;
+        z-index: 100000 !important; /* 与新的分层设置保持一致 */
         opacity: 1 !important;
-        pointer-events: auto !important;
+        pointer-events: auto !important; /* 确保按钮可点击 */
     }}
     
     
